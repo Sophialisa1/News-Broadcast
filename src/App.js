@@ -1,29 +1,21 @@
-import './App.css';
+import "./App.css";
 
-import { NavigationBar } from './components/nav';
-import { UploadMedia } from './components/uploadMedia';
-import displayMedia, { DisplayMedia } from './components/displayMedia';
+import { NavigationBar } from "./components/nav";
+import { UploadMedia } from "./components/uploadMedia";
+import { DisplayMedia } from "./components/displayMedia";
 import { useState, useEffect, useCallback } from "react";
-
 
 import Web3 from "web3";
 import { newKitFromWeb3 } from "@celo/contractkit";
 import BigNumber from "bignumber.js";
 
-
 import Media from "./contracts/Media.abi.json";
 import IERC from "./contracts/IERC.abi.json";
 
-
-
 const ERC20_DECIMALS = 18;
-
-
 
 const contractAddress = "0x34f2e58eB2FA05FE7fa82da8C5068144Ba7a7cA5";
 const cUSDContractAddress = "0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1";
-
-
 
 function App() {
   const [contract, setcontract] = useState(null);
@@ -31,8 +23,8 @@ function App() {
   const [kit, setKit] = useState(null);
   const [cUSDBalance, setcUSDBalance] = useState(0);
   const [news, setNews] = useState([]);
-  
 
+  // create a tab in form of navigation
 
   const connectToWallet = async () => {
     if (window.celo) {
@@ -68,14 +60,12 @@ function App() {
     }
   }, [address, kit]);
 
-
-
   const getMedia = useCallback(async () => {
     const newsLength = await contract.methods.getMediaLength().call();
     const news = [];
     for (let index = 0; index < newsLength; index++) {
       let _news = new Promise(async (resolve, reject) => {
-      let news = await contract.methods.getMedia(index).call();
+        let news = await contract.methods.getMedia(index).call();
 
         resolve({
           index: index,
@@ -85,18 +75,19 @@ function App() {
           categories: news[3],
           image: news[4],
           newsContent: news[5],
-          price: news[6],  
-          sold: news[7]
+          price: news[6],
+          sold: news[7],
         });
       });
       news.push(_news);
     }
 
-
     const _news = await Promise.all(news);
-    setNews(_news);
+    setNews(news);
+    console.log(_news);
   }, [contract]);
 
+  // console.log(news);
 
   const uploadMedia = async (
     _author,
@@ -104,8 +95,7 @@ function App() {
     _categories,
     _image,
     _newsContent,
-    _price,
- 
+    _price
   ) => {
     let price = new BigNumber(_price).shiftedBy(ERC20_DECIMALS).toString();
     try {
@@ -118,7 +108,7 @@ function App() {
     }
   };
 
-  const updatePrice = async (_index, _price) => { 
+  const updatePrice = async (_index, _price) => {
     const price = new BigNumber(_price).shiftedBy(ERC20_DECIMALS).toString();
     try {
       await contract.methods.updatePrice(_index, price).send({ from: address });
@@ -126,34 +116,29 @@ function App() {
       alert("you have successfully updated the price");
     } catch (error) {
       alert(error);
-    }};
+    }
+  };
 
-
-
-    const editNewsContent = async (_index, _newsContent) => { 
-      try {
-        await contract.methods.editNewsContent(_index, _newsContent).send({ from: address });
-        getMedia();
-        alert("you have successfully edited the content of these media");
-      } catch (error) {
-        alert(error);
-      }};
-
-
-
-  const removeMedia = async (
-    _index
-  ) => {
+  const editNewsContent = async (_index, _newsContent) => {
     try {
       await contract.methods
-        .removeMedia(_index)
+        .editNewsContent(_index, _newsContent)
         .send({ from: address });
       getMedia();
+      alert("you have successfully edited the content of these media");
     } catch (error) {
       alert(error);
     }
   };
 
+  const removeMedia = async (_index) => {
+    try {
+      await contract.methods.removeMedia(_index).send({ from: address });
+      getMedia();
+    } catch (error) {
+      alert(error);
+    }
+  };
 
   const buyNews = async (_index) => {
     try {
@@ -168,8 +153,8 @@ function App() {
       alert("you have successfully purchased this news");
     } catch (error) {
       alert(error);
-    }};
-
+    }
+  };
 
   useEffect(() => {
     connectToWallet();
@@ -186,12 +171,65 @@ function App() {
       getMedia();
     }
   }, [contract, getMedia]);
-  
+
+  const [showTab, setShowTab] = useState(1);
   return (
     <div className="App">
-      <NavigationBar cUSDBalance={cUSDBalance} />
-      <DisplayMedia displayMedia={displayMedia} buyNews={buyNews} walletAddress={address} updatePrice={updatePrice} removeMedia={removeMedia} editNewsContent={editNewsContent}/>
-      <UploadMedia uploadMedia={uploadMedia} />
+      <NavigationBar cUSDBalance={cUSDBalance} setShowTab={setShowTab} />
+      <div className="container">
+        <header className={`show-flex ${showTab === 1 ? null : "hide"}`}>
+          <section className="header-content">
+            <div>
+              <h1>
+                Buy news and upload your news for sale to
+                <span>Intrested persons</span>
+              </h1>
+              <p>
+                This is a medium where we sell trending and current news to
+                users for their daily consumption, we offer diffrent categories
+                of news ranging from Sports, World News, Eductaion, Trading,
+                e.t.c
+              </p>
+            </div>
+          </section>
+
+          <section className="header-btn">
+            <button
+              className="header-upload-news-btn show"
+              onClick={() => {
+                setShowTab(2);
+              }}
+            >
+              Upload news
+            </button>
+            <button
+              className="header-review-news-btn show"
+              onClick={() => {
+                setShowTab(3);
+              }}
+            >
+              Buy news
+            </button>
+          </section>
+        </header>
+
+        {/* <!-- UPLOAD NEWS FORM --> */}
+        <UploadMedia uploadMedia={uploadMedia} showTab={showTab} />
+
+        {/* <!-- ENDS HERE --> */}
+
+        {/* <!-- DISPLAY NEWS --> */}
+
+        <DisplayMedia
+          showTab={showTab}
+          // buyNews={buyNews}
+          // walletAddress={address}
+          // updatePrice={updatePrice}
+          // removeMedia={removeMedia}
+          // editNewsContent={editNewsContent}
+        />
+        {/* <!-- ENDS HERE --> */}
+      </div>
     </div>
   );
 }
