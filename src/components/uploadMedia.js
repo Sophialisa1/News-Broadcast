@@ -1,7 +1,7 @@
 import React from 'react';
 import { useState } from "react";
 
-export const UploadMedia = ({ showTab }) => {
+export const UploadMedia = ({ showTab, uploadMedia }) => {
   const [author, setAuthor] = useState("");
   const [title, setTitle] = useState("");
   const [categories, setCategories] = useState("");
@@ -10,88 +10,32 @@ export const UploadMedia = ({ showTab }) => {
   const [price, setPrice] = useState("");
 
   return (
-    // <div>
-    //   <form>
-    //     <div className="form-row">
-    //       <input
-    //         type="text"
-    //         className="form-control"
-    //         value={author}
-    //         onChange={(e) => setAuthor(e.target.value)}
-    //         placeholder="author"
-    //       />
-
-    //       <input
-    //         type="text"
-    //         className="form-control"
-    //         value={title}
-    //         onChange={(e) => setTitle(e.target.value)}
-    //         placeholder="title"
-    //       />
-
-    //       <input
-    //         type="text"
-    //         className="form-control mt-2"
-    //         value={categories}
-    //         onChange={(e) => setCategories(e.target.value)}
-    //         placeholder="categories"
-    //       />
-
-    //       <input
-    //         type="text"
-    //         className="form-control mt-2"
-    //         value={image}
-    //         onChange={(e) => setImage(e.target.value)}
-    //         placeholder="image"
-    //       />
-
-    //       <input
-    //         type="text"
-    //         className="form-control mt-2"
-    //         value={newsContent}
-    //         onChange={(e) => setNewsContent(e.target.value)}
-    //         placeholder="newsContent"
-    //       />
-
-    //       <input
-    //         type="text"
-    //         className="form-control mt-2"
-    //         value={price}
-    //         onChange={(e) => setPrice(e.target.value)}
-    //         placeholder="price"
-    //       />
-
-    //       <button
-    //         type="button"
-    //         onClick={() =>
-    //           props.uploadMedia(
-    //             author,
-    //             title,
-    //             categories,
-    //             image,
-    //             newsContent,
-    //             price
-    //           )
-    //         }
-    //         className="btn btn-primary mt-2"
-    //       >
-    //         Upload News
-    //       </button>
-    //     </div>
-    //   </form>
-    // </div>
     <>
       <div className={`user-news ${showTab === 2 ? "show" : "hide"}`}>
         <h1>Upload news</h1>
 
         <div className="author">
           <label htmlFor="author">Author:</label>
-          <input id="author" type="text" placeholder="Full Name" required />
+          <input
+            id="author"
+            type="text"
+            placeholder="Full Name"
+            required
+            value={author}
+            onChange={(e) => setAuthor(e.target.value)}
+          />
         </div>
 
         <div className="title">
           <label htmlFor="title">Title:</label>
-          <input id="title" type="text" placeholder="News Title" required />
+          <input
+            id="title"
+            type="text"
+            placeholder="News Title"
+            required
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
         </div>
 
         <div className="categories">
@@ -101,19 +45,33 @@ export const UploadMedia = ({ showTab }) => {
             type="text"
             placeholder="News Categories"
             required
+            value={categories}
+            onChange={(e) => setCategories(e.target.value)}
           />
         </div>
 
         <div className="image">
           <label htmlFor="image">Image:</label>
-          <input id="image" type="text" placeholder="Image URL" required />
+          <input
+            id="image"
+            type="text"
+            placeholder="Image URL"
+            required
+            value={image}
+            onChange={(e) => setImage(e.target.value)}
+          />
         </div>
 
         <div className="newsContent">
           <label htmlFor="newsContent">
             News Content(not more than 100 words)
           </label>
-          <textarea id="newsContent" placeholder="News goes here..."></textarea>
+          <textarea
+            id="newsContent"
+            placeholder="News goes here..."
+            value={newsContent}
+            onChange={(e) => setNewsContent(e.target.value)}
+          ></textarea>
         </div>
 
         <div className="price">
@@ -123,11 +81,18 @@ export const UploadMedia = ({ showTab }) => {
             type="number"
             placeholder="Price to be payed"
             required
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
           />
         </div>
 
         <div className="article-btn">
-          <button id="uploadNewsButton">
+          <button
+            id="uploadNewsButton"
+            onClick={() =>
+              uploadMedia(author, title, categories, image, newsContent, price)
+            }
+          >
             Upload <span className="loader"></span>
           </button>
         </div>
