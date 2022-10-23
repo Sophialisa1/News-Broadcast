@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const NavigationBar = ({ cUSDBalance, setShowTab }) => {
+export const NavigationBar = ({ cUSDBalance, setShowTab, showTab }) => {
   return (
     <div>
       <nav>
@@ -18,6 +18,7 @@ export const NavigationBar = ({ cUSDBalance, setShowTab }) => {
               onClick={() => {
                 setShowTab(1);
               }}
+              className={`${showTab === 1 ? "active" : null}`}
             >
               Home
             </li>
@@ -25,6 +26,7 @@ export const NavigationBar = ({ cUSDBalance, setShowTab }) => {
               onClick={() => {
                 setShowTab(3);
               }}
+              className={`${showTab === 3 ? "active" : null}`}
             >
               Buy News
             </li>
@@ -32,6 +34,7 @@ export const NavigationBar = ({ cUSDBalance, setShowTab }) => {
               onClick={() => {
                 setShowTab(2);
               }}
+              className={`${showTab === 2 ? "active" : null}`}
             >
               Upload News
             </li>
