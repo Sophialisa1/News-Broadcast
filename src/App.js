@@ -22,9 +22,8 @@ function App() {
   const [address, setAddress] = useState(null);
   const [kit, setKit] = useState(null);
   const [cUSDBalance, setcUSDBalance] = useState(0);
-  const [news, setNews] = useState([]);
-
-  // create a tab in form of navigation
+  const [newsList, setNewsList] = useState([]);
+  const [loadingNews, setLoadingNews] = useState(true);
 
   const connectToWallet = async () => {
     if (window.celo) {
@@ -50,7 +49,9 @@ function App() {
   const getBalance = useCallback(async () => {
     try {
       const balance = await kit.getTotalBalance(address);
+      setLoadingNews(true);
       const USDBalance = balance.cUSD.shiftedBy(-ERC20_DECIMALS).toFixed(2);
+      console.log("hi");
 
       const contract = new kit.web3.eth.Contract(Media, contractAddress);
       setcontract(contract);
@@ -59,54 +60,6 @@ function App() {
       console.log(error);
     }
   }, [address, kit]);
-
-  const getMedia = useCallback(async () => {
-    const newsLength = await contract.methods.getMediaLength().call();
-    const news = [];
-    for (let index = 0; index < newsLength; index++) {
-      let _news = new Promise(async (resolve, reject) => {
-        let news = await contract.methods.getMedia(index).call();
-
-        resolve({
-          index: index,
-          owner: news[0],
-          author: news[1],
-          title: news[2],
-          categories: news[3],
-          image: news[4],
-          newsContent: news[5],
-          price: news[6],
-          sold: news[7],
-        });
-      });
-      news.push(_news);
-    }
-
-    const _news = await Promise.all(news);
-    setNews(news);
-    console.log(_news);
-  }, [contract]);
-
-  // console.log(news);
-
-  const uploadMedia = async (
-    _author,
-    _title,
-    _categories,
-    _image,
-    _newsContent,
-    _price
-  ) => {
-    let price = new BigNumber(_price).shiftedBy(ERC20_DECIMALS).toString();
-    try {
-      await contract.methods
-        .uploadMedia(_author, _title, _categories, _image, _newsContent, price)
-        .send({ from: address });
-      getMedia();
-    } catch (error) {
-      alert(error);
-    }
-  };
 
   const updatePrice = async (_index, _price) => {
     const price = new BigNumber(_price).shiftedBy(ERC20_DECIMALS).toString();
@@ -141,11 +94,10 @@ function App() {
   };
 
   const buyNews = async (_index) => {
+    const cUSDContract = new kit.web3.eth.Contract(IERC, cUSDContractAddress);
     try {
-      const cUSDContract = new kit.web3.eth.Contract(IERC, cUSDContractAddress);
-      const cost = news[_index].price;
       await cUSDContract.methods
-        .approve(contractAddress, cost)
+        .approve(contractAddress, newsList[_index].price)
         .send({ from: address });
       await contract.methods.buyNews(_index).send({ from: address });
       getMedia();
@@ -166,16 +118,69 @@ function App() {
     }
   }, [kit, address, getBalance]);
 
+  const getMedia = useCallback(async () => {
+    const mediaLength = await contract.methods.getMediaLength().call();
+    // console.log(mediaLength);
+    setLoadingNews(true);
+    const medias = [];
+    for (let index = 0; index < mediaLength; index++) {
+      let _medias = new Promise(async (resolve, reject) => {
+        let media = await contract.methods.getMedia(index).call();
+
+        resolve({
+          index: index,
+          owner: media[0],
+          author: media[1],
+          title: media[2],
+          categories: media[3],
+          image: media[4],
+          newsContent: media[5],
+          price: media[6],
+          sold: media[7],
+        });
+      });
+      medias.push(_medias);
+    }
+
+    const _medias = await Promise.all(medias);
+
+    setLoadingNews(false);
+    setNewsList(_medias);
+  }, [contract]);
   useEffect(() => {
     if (contract) {
       getMedia();
     }
   }, [contract, getMedia]);
 
-  const [showTab, setShowTab] = useState(1);
+  const uploadMedia = async (
+    _author,
+    _title,
+    _categories,
+    _image,
+    _newsContent,
+    _price
+  ) => {
+    try {
+      let price = new BigNumber(_price).shiftedBy(ERC20_DECIMALS).toString();
+      await contract.methods
+        .uploadMedia(_author, _title, _categories, _image, _newsContent, price)
+        .send({ from: address });
+      getMedia();
+    } catch (error) {
+      alert(error);
+    }
+  };
+
+  // create a tab in form of navigation
+  const [showTab, setShowTab] = useState(3);
   return (
     <div className="App">
-      <NavigationBar cUSDBalance={cUSDBalance} setShowTab={setShowTab} />
+      <NavigationBar
+        cUSDBalance={cUSDBalance}
+        showTab={showTab}
+        setShowTab={setShowTab}
+      />
       <div className="container">
         <header className={`show-flex ${showTab === 1 ? null : "hide"}`}>
           <section className="header-content">
@@ -213,22 +218,42 @@ function App() {
           </section>
         </header>
 
-        {/* <!-- UPLOAD NEWS FORM --> */}
-        <UploadMedia uploadMedia={uploadMedia} showTab={showTab} />
+        <div className={`show-flex ${showTab === 2 ? null : "hide"}`}>
+          {" "}
+          {/* <!-- UPLOAD NEWS FORM --> */}
+          <UploadMedia uploadMedia={uploadMedia} showTab={showTab} />
+          {/* <!-- ENDS HERE --> */}
+        </div>
 
-        {/* <!-- ENDS HERE --> */}
-
-        {/* <!-- DISPLAY NEWS --> */}
-
-        <DisplayMedia
-          showTab={showTab}
-          // buyNews={buyNews}
-          // walletAddress={address}
-          // updatePrice={updatePrice}
-          // removeMedia={removeMedia}
-          // editNewsContent={editNewsContent}
-        />
-        {/* <!-- ENDS HERE --> */}
+        <div
+          className={`show-flex  ${showTab === 3 ? null : "hide"}`}
+          style={{ flexDirection: "row" }}
+        >
+          {" "}
+          {/* <!-- DISPLAY NEWS --> */}
+          {loadingNews ? (
+            <div className="d-flex justify-content-center fs-1 h-100 w-100 my-auto">
+              Loading News...
+            </div>
+          ) : (
+            <>
+              {newsList.map((news, i) => {
+                return (
+                  <DisplayMedia
+                    key={i}
+                    editNewsContent={editNewsContent}
+                    removeMedia={removeMedia}
+                    buyNews={buyNews}
+                    showTab={showTab}
+                    news={news}
+                    updatePrice={updatePrice}
+                  />
+                );
+              })}
+            </>
+          )}
+          {/* <!-- ENDS HERE --> */}
+        </div>
       </div>
     </div>
   );
