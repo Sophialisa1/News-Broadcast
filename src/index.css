@@ -87,9 +87,14 @@ nav .logo {
   transition: all 0.3s;
   cursor: pointer;
 }
-.navigation li:hover {
-  background-color: var(--btn-color);
+.navigation li.active {
   color: #fff;
+  background-color: var(--btn-color);
+  border-radius: 3px;
+}
+.navigation li:hover {
+  border-bottom:solid 3px var(--btn-color);
+  /* color: #fff; */
   border-radius: 3px;
 }
 .navigation .user-acct-balance {
@@ -285,6 +290,7 @@ header .header-content {
 .show-flex {
   display: flex;
   flex-direction: column;
+  /* flex-wrap: wrap; */
 }
 .hide {
   display: none;
