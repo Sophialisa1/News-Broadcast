@@ -31,7 +31,7 @@ contract Newsmedia {
         uint sold;
     }
 
-    mapping (uint => Media) internal news;
+    mapping (uint => Media) private news;
 
         modifier onlyOwner(uint _index) {
         require(msg.sender == news[_index].owner, "Only Owner");
@@ -39,15 +39,20 @@ contract Newsmedia {
     }
 
 
-//carring out the function will add a new media to the mapping
+    /// @dev carring out the function will add a new media to the mapping
     function uploadMedia(
-        string memory _author,
-        string memory _title,
-        string memory _categories,
-        string memory _image,
-        string memory _newsContent,  
+        string calldata _author,
+        string calldata _title,
+        string calldata _categories,
+        string calldata _image,
+        string calldata _newsContent,  
         uint _price
     ) public {
+        require(bytes(_author).length > 0, "Empty author");
+        require(bytes(_title).length > 0, "Empty title");
+        require(bytes(_categories).length > 0, "Empty categories");
+        require(bytes(_image).length > 0, "Empty image");
+        require(bytes(_newsContent).length > 0, "Empty news content");
         uint _sold = 0;
         news[newsLength] = Media(
             payable(msg.sender),
@@ -62,7 +67,7 @@ contract Newsmedia {
         newsLength++;
     }
 
-//acquire a Ticket from 
+/// @return data of a news coverage 
     function getMedia(uint _index) public view returns (
         address payable,
         string memory, 
@@ -90,35 +95,44 @@ contract Newsmedia {
 
 
 
-// remove news from catalog
-    function removeMedia(uint _index) external {
-	        require(msg.sender == news[_index].owner, "Only the owner can remove the news");         
-            news[_index] = news[newsLength - 1];
-            delete news[newsLength - 1];
-            newsLength--; 
+    /// @dev remove news from catalog
+    function removeMedia(uint _index) external onlyOwner(_index) {  
+            uint newNewsLength = newsLength - 1;     
+            news[_index] = news[newNewsLength];
+            delete news[newNewsLength];
+            newsLength = newNewsLength; 
 	 }
 
-    function updatePrice(uint _index) public {
-            require(msg.sender == news[_index].owner, "Invalid owner");
-            news[_index] = news[newsLength - 1];
+    /**
+        * @dev allow an author to change the price of his news article
+     */
+    function updatePrice(uint _index, uint price) public onlyOwner(_index)  {
+            news[_index].price = price;
     }
 
 
-    function editNewsContent(uint _index) public {
-        require(msg.sender == news[_index].owner, "Invalid owner");
-        news[_index] = news[newsLength - 1];
+    /**
+        * @dev allow an author to edit the content of his news coverage
+     */
+    function editNewsContent(uint _index, string calldata _content) public  onlyOwner(_index) {
+        news[_index].newsContent = _content;
     }
 
+    /**
+        * @dev allow readers to buy and view an article/news
+     */
     function buyNews(uint _index) public payable  {
+        Media storage currentNews = news[_index];
+        require(currentNews.owner != msg.sender, "Author can't buy his news coverage");
         require(
           IERC20Token(cUsdTokenAddress).transferFrom(
             msg.sender,
-            news[_index].owner,
-            news[_index].price
+            currentNews.owner,
+            currentNews.price
           ),
           "Transfer failed."
         );
-        news[_index].sold++;
+        currentNews.sold++;
     }
 
     
